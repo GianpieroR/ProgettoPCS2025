@@ -8,6 +8,7 @@
 # message(${CMAKE_PROJECT_NAME})
 
 list(APPEND src_headers ${CMAKE_CURRENT_SOURCE_DIR}/Utils.hpp)
+list(APPEND src_headers ${CMAKE_CURRENT_SOURCE_DIR}/PolyhedralMesh.hpp)
 
 list(APPEND src_sources ${CMAKE_CURRENT_SOURCE_DIR}/Triangulation1.cpp)
 list(APPEND src_sources ${CMAKE_CURRENT_SOURCE_DIR}/Triangulation2.cpp)
