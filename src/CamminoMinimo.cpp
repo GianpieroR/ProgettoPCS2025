@@ -1,172 +1,204 @@
 #include "Utils.hpp"          
 #include "PolyhedralMesh.hpp" 
-#include <iostream>           
-#include <vector>             
-#include <queue>              
-#include <map>                
-#include <limits>             
-#include <cmath>              
-#include <algorithm>          
-#include <tuple>              
+#include <iostream>           // Per std::cout, std::cerr
+#include <vector>             // Per std::vector
+#include <queue>              // Per std::priority_queue
+#include <map>                // Per std::map
+#include <limits>             // Per std::numeric_limits
+#include <cmath>              // Per std::sqrt (usato in calculateDistanceById)
+#include <algorithm>          // Per std::min, std::max
+#include <tuple>              // Per std::tie o destructuring assignment (C++17)
 #include <utility>
 #include <Eigen/Dense>
 
 using namespace std;
 using namespace Eigen; 
-
 namespace PolyhedralLibrary{
 
-// COSTRUTTORE DEL RISULTATO DEL CAMMINO MINIMO
-ShortestPathResult::ShortestPathResult(unsigned int edgesCount, double pathLength)
-    : numEdges(edgesCount), totalLength(pathLength)
+// IMPLEMENTAZIONE DEL COSTRUTTORE DI SHORTESTPATHRESULT
+ShortestPathResult::ShortestPathResult(unsigned int nEdges, double len)
+    : numEdges(nEdges), totalLength(len)
 {}
 
-// Calcola la distanza euclidea tra due vertici dati i loro ID
-double calculateDistanceById(const PolyhedralMesh& mesh, const unsigned int vertexId1, const unsigned int vertexId2) {
-    VectorXd point1 = mesh.Cell0DsCoordinates.col(vertexId1);
-    VectorXd point2 = mesh.Cell0DsCoordinates.col(vertexId2);
-    return (point1 - point2).norm();  // Norma vettoriale = distanza euclidea
+// Funzione per calcolare la distanza euclidea tra due punti.
+double calculateDistanceById(const PolyhedralMesh& mesh, const unsigned int id1, const unsigned int id2) {
+    
+    VectorXd p1 = mesh.Cell0DsCoordinates.col(id1);
+    VectorXd p2 = mesh.Cell0DsCoordinates.col(id2);
+
+    return (p1 - p2).norm(); // Calcola la norma (distanza euclidea)
 }
 
-// Costruisce la matrice di adiacenza della mesh
-MatrixXi calculateAdjacencyMatrix(const PolyhedralMesh& mesh) {
-    const unsigned int totalVertices = mesh.Cell0DsCoordinates.cols();
-    MatrixXi adjacencyMatrix = MatrixXi::Zero(totalVertices, totalVertices);
 
-    // Per ogni lato nella mesh, indica connessione bidirezionale tra i due vertici
-    for (unsigned int edgeIdx = 0; edgeIdx < mesh.Cell1DsId.size(); ++edgeIdx) {
-        unsigned int vertexA = mesh.Cell1DsExtrema(edgeIdx, 0);
-        unsigned int vertexB = mesh.Cell1DsExtrema(edgeIdx, 1);
-        adjacencyMatrix(vertexA, vertexB) = 1;
-        adjacencyMatrix(vertexB, vertexA) = 1;
+// Funzione per calcolare la matrice di adiacenza
+MatrixXi calculateAdjacencyMatrix(const PolyhedralMesh& mesh) {
+    const unsigned int numVertices = mesh.Cell0DsCoordinates.cols();
+	MatrixXi adjMatrix = MatrixXi::Zero(numVertices, numVertices);
+
+    // Itera su tutti i lati (Cell1Ds) della mesh
+    for (unsigned int i = 0; i < mesh.Cell1DsId.size(); ++i) {
+
+        unsigned int v1 = mesh.Cell1DsExtrema(i, 0);
+        unsigned int v2 = mesh.Cell1DsExtrema(i, 1);
+		
+        adjMatrix(v1, v2) = 1;
+        adjMatrix(v2, v1) = 1;
     }
 
-    return adjacencyMatrix;
+    return adjMatrix;
 }
 
-// Implementazione dell'algoritmo di Dijkstra per il cammino minimo tra due vertici
 ShortestPathResult findShortestPathDijkstra(
     PolyhedralMesh& mesh,
-    const MatrixXi& adjacencyMatrix,
-    const unsigned int startVertex,
-    const unsigned int targetVertex
+    const MatrixXi& adjMatrix,
+    const unsigned int startVertexId,
+    const unsigned int endVertexId
 ) {
-    const unsigned int totalVertices = mesh.Cell0DsCoordinates.cols();
-    const unsigned int totalEdges = mesh.Cell1DsId.size();
-
-    // Controllo validità degli ID di partenza e arrivo
-    if (startVertex >= totalVertices) {
-        cerr << "Errore: startVertex (" << startVertex << ") non valido." << endl;
+	const unsigned int numVertices = mesh.Cell0DsCoordinates.cols(); // Numero totale di vertici
+    const unsigned int numEdgesInMesh = mesh.Cell1DsId.size();     // Numero totale di lati nella mesh
+    
+    if (startVertexId >= numVertices) {
+        cerr << "Errore: startVertexId (" << startVertexId << ") è fuori dal range valido di vertici [0, " << numVertices - 1 << "]." << endl;
+        // Restituisci un risultato vuoto per indicare un errore
         return ShortestPathResult(0, 0.0);
     }
-    if (targetVertex >= totalVertices) {
-        cerr << "Errore: targetVertex (" << targetVertex << ") non valido." << endl;
+    if (endVertexId >= numVertices) {
+        cerr << "Errore: endVertexId (" << endVertexId << ") è fuori dal range valido di vertici [0, " << numVertices - 1 << "]." << endl;
+        // Restituisci un risultato vuoto per indicare un errore
         return ShortestPathResult(0, 0.0);
     }
 
-    // Risultato iniziale (cammino vuoto)
-    ShortestPathResult pathResult(0, 0.0);
+	// Inizializza il risultato
+    ShortestPathResult result(0, 0.0);
 
-    // Caso semplice: partenza e arrivo coincidono
-    if (startVertex == targetVertex) {
-        cout << "Vertice di partenza e arrivo coincidono. Cammino nullo." << endl;
-        mesh.Cell0DsMarker.assign(totalVertices, 0);
-        mesh.Cell1DsMarker.assign(totalEdges, 0);
-        mesh.Cell0DsMarker[startVertex] = 1; // Marca solo il vertice di partenza
-        return pathResult;
+    // Caso banale: partenza e arrivo sono lo stesso vertice
+    if (startVertexId == endVertexId) {
+        cout << "Partenza e arrivo coincidono. Cammino nullo." << endl;
+        mesh.Cell0DsMarker.assign(numVertices, 0); 
+        mesh.Cell1DsMarker.assign(numEdgesInMesh, 0);
+        mesh.Cell0DsMarker[startVertexId] = 1; // Marca il vertice sulla mesh
+        return result;
     }
 
-    // Mappa che associa ogni coppia ordinata di vertici all'ID del lato e alla sua lunghezza
-    map<pair<unsigned int, unsigned int>, pair<unsigned int, double>> edgeDataMap;
-    for (unsigned int edgeIdx = 0; edgeIdx < totalEdges; ++edgeIdx) {
-        unsigned int vertex1 = mesh.Cell1DsExtrema(edgeIdx, 0);
-        unsigned int vertex2 = mesh.Cell1DsExtrema(edgeIdx, 1);
-        double edgeLength = calculateDistanceById(mesh, vertex1, vertex2);
+    // Mappa per collegare una coppia di vertici (tramite INDICI)
+    // all'ID del lato e alla sua lunghezza.
+    map<pair<unsigned int, unsigned int>, pair<unsigned int, double>> edgeInfoMap;
+    
+	for (unsigned int i = 0; i < numEdgesInMesh; ++i) {
+        unsigned int v1 = mesh.Cell1DsExtrema(i, 0);
+        unsigned int v2 = mesh.Cell1DsExtrema(i, 1);
 
-        // Salva le informazioni usando coppie ordinate (min, max) come chiave
-        edgeDataMap[{min(vertex1, vertex2), max(vertex1, vertex2)}] = {mesh.Cell1DsId[edgeIdx], edgeLength};
+        double length = calculateDistanceById(mesh, v1, v2);
+
+        // Memorizziamo l'informazione usando gli INDICI dei vertici, garantendo ordine per la chiave della mappa
+        edgeInfoMap[{min(v1, v2), max(v1, v2)}] = {mesh.Cell1DsId[i], length};
     }
 
-    // Vettori per l'algoritmo di Dijkstra
-    vector<double> minDistance(totalVertices, numeric_limits<double>::infinity()); // Distanza minima da startVertex
-    vector<unsigned int> previousVertex(totalVertices, -1);                        // Predecessore del vertice nel cammino minimo
-    vector<unsigned int> previousEdge(totalVertices, -1);                          // ID del lato usato per arrivare al vertice
-    vector<bool> isProcessed(totalVertices, false);                                // Indica se il vertice è stato processato definitivamente
+    // Variabili Dijkstra
+	
+    // dist[i]: distanza minima conosciuta dal vertice di partenza a i
+    vector<double> dist(numVertices, numeric_limits<double>::infinity());
+	
+    // predVertex[i]: indice del vertice precedente nel cammino minimo a i
+    vector<unsigned int> predVertex(numVertices, -1); // Usiamo -1 per indicare nessun predecessore
+	
+    // predEdge[i]: ID del Cell1D usato per raggiungere i dal suo predecessore
+    vector<unsigned int> predEdge(numVertices, -1);
 
-    // Coda di priorità per vertici da esplorare: (distanza, vertice)
-    using QueueElement = pair<double, unsigned int>;
-    priority_queue<QueueElement, vector<QueueElement>, greater<>> vertexQueue;
+    // visited[i]: true se il cammino più breve a 'i' è stato finalizzato
+    vector<bool> visited(numVertices, false); 
 
-    // Inizializza vertice di partenza
-    minDistance[startVertex] = 0.0;
-    vertexQueue.push({0.0, startVertex});
+    // Coda di priorità: memorizza coppie {distanza, indice_vertice}
+    // std::greater per creare un min-heap (estrae l'elemento con la distanza minore)
+    using QueueElem = pair<double, unsigned int>;
+    priority_queue<QueueElem, vector<QueueElem>, greater<>> pq;
+	
+	// priority_queue<QueueElem, vector<QueueElem>, greater<QueueElem>> pq;
 
-    // Ciclo principale di Dijkstra
-    while (!vertexQueue.empty()) {
-        auto [currentDist, currentVertex] = vertexQueue.top();
-        vertexQueue.pop();
+    // Imposta la distanza del vertice di partenza a 0 e aggiungilo alla coda
+    dist[startVertexId] = 0.0;
+    pq.push({0.0, startVertexId});
 
-        // Se il vertice è già stato processato, saltalo
-        if (isProcessed[currentVertex]) continue;
+    // algoritmo Dijkstra
+    while (!pq.empty()) {
+        // Estrai il vertice 'u' con la distanza minima corrente dalla coda
+		auto [current_distance, u] = pq.top(); // accedo all'elemento
+        pq.pop(); // rimuovo l'elemento
 
-        isProcessed[currentVertex] = true;
+        // Se il vertice è già stato visitato, significa che abbiamo già trovato
+        // il cammino più breve per esso, quindi ignoriamo questa istanza.
+        if (visited[u]) {
+            continue;
+        }
+        visited[u] = true; // Marca il vertice come visitato/finalizzato
 
-        // Se siamo arrivati al vertice di destinazione, usciamo
-        if (currentVertex == targetVertex) break;
+        // Se abbiamo raggiunto il vertice di arrivo, possiamo terminare l'algoritmo
+        if (u == endVertexId) {
+            break;
+        }
 
-        // Esamina tutti i vicini del vertice corrente
-        for (unsigned int neighbor = 0; neighbor < totalVertices; ++neighbor) {
-            if (adjacencyMatrix(currentVertex, neighbor) == 1) {
-                // Recupera info del lato tra currentVertex e neighbor
-                auto edgeIt = edgeDataMap.find({min(currentVertex, neighbor), max(currentVertex, neighbor)});
-                if (edgeIt == edgeDataMap.end()) {
-                    cerr << "Avviso: lato (" << currentVertex << "," << neighbor << ") non trovato in edgeDataMap.\n";
+        // Itera su tutti i possibili vicini 'v' di 'u' usando la matrice di adiacenza
+        for (unsigned int v = 0; v < numVertices; ++v) {
+            // Se c'è un lato tra u e v (adjMatrix(u, v) == 1)
+            if (adjMatrix(u, v) == 1) {
+                // Recupera le informazioni sul lato (ID reale e lunghezza/peso)
+                auto it_edge = edgeInfoMap.find({min(u, v), max(u, v)});
+                if (it_edge == edgeInfoMap.end()) {
+                    cerr << "Avviso: Lato tra indici (" << u << "," << v << ") presente in AdjacencyMatrix ma non trovato in edgeInfoMap.\n";
                     continue;
                 }
+                double weight = it_edge->second.second; // Peso del lato (lunghezza euclidea)
 
-                double edgeWeight = edgeIt->second.second;
-                // Se passando per currentVertex si migliora la distanza a neighbor, aggiorna
-                if (minDistance[currentVertex] + edgeWeight < minDistance[neighbor]) {
-                    minDistance[neighbor] = minDistance[currentVertex] + edgeWeight;
-                    previousVertex[neighbor] = currentVertex;
-                    previousEdge[neighbor] = edgeIt->second.first;
-                    vertexQueue.push({minDistance[neighbor], neighbor});
+                // Operazione di "rilassamento":
+                // Se la distanza calcolata a 'v' passando per 'u' è minore della distanza attuale di 'v'
+                if (dist[u] + weight < dist[v]) {
+                    dist[v] = dist[u] + weight; // Aggiorna la distanza minima per 'v'
+                    predVertex[v] = u;          // Imposta 'u' come predecessore di 'v'
+                    predEdge[v] = it_edge->second.first; // Memorizza l'ID reale del lato usato
+                    pq.push({dist[v], v});      // Inserisci 'v' nella coda di priorità con la nuova distanza
                 }
             }
         }
     }
-
-    // Se non è stato trovato un cammino valido
-    if (minDistance[targetVertex] == numeric_limits<double>::infinity()) {
-        cout << "Nessun cammino trovato tra i vertici " << startVertex << " e " << targetVertex << "." << endl;
-        mesh.Cell0DsMarker.assign(totalVertices, 0);
-        mesh.Cell1DsMarker.assign(totalEdges, 0);
-        return pathResult;
+	
+    // Se la distanza al vertice di arrivo è ancora infinito, significa che non è stato trovato alcun cammino
+    if (dist[endVertexId] == numeric_limits<double>::infinity()) {
+        cout << "Nessun cammino trovato tra il vertice " << startVertexId
+                  << " e il vertice " << endVertexId << endl;
+        mesh.Cell0DsMarker.assign(numVertices, 0);
+        mesh.Cell1DsMarker.assign(numEdgesInMesh, 0);
+		return result;
     }
+	
+	
+    // Ricostruzione del cammino e calcolo delle statistiche
+    // Ricostruisci il cammino a ritroso dal vertice di arrivo al vertice di partenza
+	
+	// Inizializzo i marker della mesh a 0
+    mesh.Cell0DsMarker.assign(numVertices, 0); // Inizializza i marker a 0
+    mesh.Cell1DsMarker.assign(numEdgesInMesh, 0);
+	
+	result.totalLength = dist[endVertexId]; // distanza totale
 
-    // Ricostruisci il cammino minimo a ritroso
-    mesh.Cell0DsMarker.assign(totalVertices, 0); // Reset marker vertici
-    mesh.Cell1DsMarker.assign(totalEdges, 0);    // Reset marker lati
+    unsigned int current_idx = endVertexId; // Partiamo dall'indice del vertice di arrivo
+	
+	while (current_idx != startVertexId) {
+        // Marca il vertice corrente come parte del cammino minimo
+        mesh.Cell0DsMarker[current_idx] = 1;
 
-    pathResult.totalLength = minDistance[targetVertex];
-    unsigned int currentIndex = targetVertex;
+        unsigned int prev_vertex_idx = predVertex[current_idx]; // Indice del vertice precedente nel cammino
+        unsigned int edge_used_id = predEdge[current_idx];      // ID del lato usato per raggiungere current_idx
 
-    while (currentIndex != startVertex) {
-        mesh.Cell0DsMarker[currentIndex] = 1; // Marca il vertice come parte del cammino
-
-        unsigned int prevIndex = previousVertex[currentIndex];
-        unsigned int usedEdgeId = previousEdge[currentIndex];
-
-        mesh.Cell1DsMarker[usedEdgeId] = 1;   // Marca il lato usato
-        pathResult.numEdges++;
-
-        currentIndex = prevIndex;
+        mesh.Cell1DsMarker[edge_used_id] = 1;
+        result.numEdges++;
+        
+        current_idx = prev_vertex_idx; // Spostati al vertice precedente e continua la ricostruzione
     }
-
-    // Marca anche il vertice di partenza
-    mesh.Cell0DsMarker[startVertex] = 1;
-
-    return pathResult;
+	
+    // Marca anche il vertice di partenza come parte del cammino
+    mesh.Cell0DsMarker[startVertexId] = 1;	
+	
+	return result;
 }
 
 }
