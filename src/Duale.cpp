@@ -9,7 +9,48 @@ using namespace std;
 using namespace Eigen;
 namespace PolyhedralLibrary {
 	
-// Funzione per ottenere il baricentro di una faccia
+	// Questa serie di funzioni ha lo scopo di costruire delle strutture dati fondamentali
+	// per poter generare la mesh duale a partire da una mesh poliedrale triangolata.
+	// In particolare, si costruiscono mappe che collegano elementi topologici diversi
+	// (vertici, spigoli, facce) della mesh originale, in modo da facilitare la navigazione
+	// e la costruzione della mesh duale.
+	//
+	// 1. getFaceBarycenter:
+	//    Questa funzione calcola il baricentro (centroide) di una faccia della mesh originale.
+	//    Il baricentro di una faccia è definito come la media aritmetica delle coordinate dei suoi vertici.
+	//    Questo punto servirà poi come vertice della mesh duale, perchè nel duale i vertici sono i baricentri delle facce originali.
+	//
+	//    - Si parte da un vettore zero (Vector3d::Zero()).
+	//    - Si sommano le coordinate di tutti i vertici appartenenti alla faccia specificata.
+	//    - Si divide la somma per 3 (presupponendo che ogni faccia sia un triangolo, quindi 3 vertici).
+
+	//
+	// 2. buildEdgeToFacesMap:
+	//    Questa funzione costruisce una mappa che associa ad ogni spigolo (definito come coppia ordinata di vertici)
+	//    le facce che condividono quello spigolo.
+	//
+	//    - Si itera su tutte le facce della mesh originale.
+	//    - Per ogni faccia si recuperano gli spigoli che la compongono.
+	//    - Per ogni spigolo, si determina una chiave unica, ordinando gli ID dei vertici dello spigolo (min, max).
+	//      Questo evita di avere chiavi duplicate come (2,5) e (5,2).
+	//    - Si aggiorna la mappa inserendo la faccia corrente nella lista delle facce associate a quello spigolo.
+	//   
+	//
+	// 3. buildVertexToFacesMap:
+	//    Qui si costruisce una mappa che associa ad ogni vertice originale le facce che lo contengono.
+	//
+	//    - Per ogni faccia, si itera su tutti i suoi vertici.
+	//    - Si aggiunge la faccia corrente alla lista delle facce associate a quel vertice.
+	//
+	//
+	// 4. buildVertexToEdgesMap:
+	//    Questa funzione crea una mappa che associa ad ogni vertice originale gli spigoli che lo coinvolgono.
+	//
+	//    - Si itera su tutti gli spigoli della mesh originale.
+	//    - Per ogni spigolo si prendono i due vertici estremi.
+	//    - Si aggiorna la mappa associando a ciascuno dei due vertici lo spigolo corrente.
+		
+
 Vector3d getFaceBarycenter(const PolyhedralMesh& meshTriangulated, const unsigned int faceId) {
     Vector3d barycenter = Vector3d::Zero();
     const auto& faceVertices = meshTriangulated.Cell2DsVertices[faceId];
@@ -19,7 +60,7 @@ Vector3d getFaceBarycenter(const PolyhedralMesh& meshTriangulated, const unsigne
     return barycenter /= (3.0);
 }
 
-// Mappa Spigolo Originale -> Facce che lo Contengono
+
 map <pair<unsigned int, unsigned int>, vector<unsigned int>> buildEdgeToFacesMap(const PolyhedralMesh& meshTriangulated) {
     map<pair<unsigned int, unsigned int>, vector<unsigned int>> edgeToFaces;
 
@@ -37,7 +78,7 @@ map <pair<unsigned int, unsigned int>, vector<unsigned int>> buildEdgeToFacesMap
     return edgeToFaces;
 }
 
-// Mappa Vertice Originale -> Facce che lo Contengono
+
 map<unsigned int, vector<unsigned int>> buildVertexToFacesMap(const PolyhedralMesh& meshTriangulated) {
     map<unsigned int, vector<unsigned int>> vertexToFaces;
     for (unsigned int faceId = 0; faceId < meshTriangulated.Cell2DsId.size(); ++faceId) {
@@ -48,7 +89,7 @@ map<unsigned int, vector<unsigned int>> buildVertexToFacesMap(const PolyhedralMe
     return vertexToFaces;
 }
 
-// Mappa Vertice Originale -> Spigoli che vi incidono
+
 map<unsigned int, vector<unsigned int>> buildVertexToEdgesMap(const PolyhedralMesh& meshTriangulated) {
     map<unsigned int, vector<unsigned int>> vertexToEdges;
     for (unsigned int edgeId = 0; edgeId < meshTriangulated.Cell1DsExtrema.rows(); ++edgeId) {
@@ -63,7 +104,9 @@ map<unsigned int, vector<unsigned int>> buildVertexToEdgesMap(const PolyhedralMe
 
 void CalculateDual(PolyhedralMesh& meshTriangulated, PolyhedralMesh& meshDual, map<pair<unsigned int, unsigned int>, vector<unsigned int>> edgeToFacesMap)
 {
-	// VERTICI
+	// --- VERTICI DEL DUALE ---
+    // I vertici del poliedro duale corrispondono ai baricentri delle facce del mesh originale.
+    // Quindi inizializziamo il vettore degli ID e la matrice delle coordinate dei vertici duali
 	// i vertici del duale sono i baricentri delle facce originali
 	meshDual.Cell0DsId.resize(meshTriangulated.Cell2DsId.size());
 	meshDual.Cell0DsCoordinates = MatrixXd::Zero(3, meshTriangulated.Cell2DsId.size());
@@ -73,7 +116,9 @@ void CalculateDual(PolyhedralMesh& meshTriangulated, PolyhedralMesh& meshDual, m
         meshDual.Cell0DsId[faceId] = faceId; // L'ID del vertice duale è l'ID della faccia originale
     }
     
-    // SPIGOLI
+    // --- SPIGOLI DEL DUALE ---
+    // Ogni spigolo interno della mesh originale (cioè condiviso da esattamente due facce)
+    // genera uno spigolo nel poliedro duale che collega i baricentri (vertici duali) di queste due facce.
     
     vector<pair<unsigned int, unsigned int>> dualEdgesExtremaVector;
     // Ogni spigolo interno del poliedro originale (condiviso da due facce) genera uno spigolo nel poliedro duale che connette i baricentri di quelle due facce.
@@ -102,7 +147,13 @@ void CalculateDual(PolyhedralMesh& meshTriangulated, PolyhedralMesh& meshDual, m
 		meshDual.Cell1DsExtrema(i, 1) = dualEdgesExtremaVector[i].second;
     }
     
-    // FACCE
+    // --- FACCE DEL DUALE ---
+    // Ogni vertice originale genera una faccia nel poliedro duale.
+    // Per costruire questa faccia dobbiamo ordinare correttamente i vertici duali (baricentri delle facce originali)
+    // che sono incidenti a quel vertice.
+
+    // Creiamo una mappa dagli spigoli duali (coppie di vertici duali) al loro ID,
+    // per facilitare la costruzione delle facce duali
     
     map<pair<unsigned int, unsigned int>, unsigned int> dualEdgeToIdMap;
     // mappa che per ogni coppia di id di facce originali mi associa l'id dello spigolo duale
