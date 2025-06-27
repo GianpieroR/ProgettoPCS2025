@@ -61,27 +61,42 @@ Vector3d getFaceBarycenter(const PolyhedralMesh& meshTriangulated, const unsigne
 }
 
 
-map <pair<unsigned int, unsigned int>, vector<unsigned int>> buildEdgeToFacesMap(const PolyhedralMesh& meshTriangulated) {
+// Costruisce una mappa che associa ogni spigolo (edge) alle facce (face) che lo contengono.
+// La chiave è una coppia di vertici ordinati (min, max) per garantire unicità indipendentemente dall'orientamento dello spigolo.
+// Il valore è un vettore di ID delle facce che condividono quello spigolo.
+map<pair<unsigned int, unsigned int>, vector<unsigned int>> buildEdgeToFacesMap(const PolyhedralMesh& meshTriangulated) {
     map<pair<unsigned int, unsigned int>, vector<unsigned int>> edgeToFaces;
 
+    // Scorriamo tutte le facce del mesh triangolato (ogni faccia ha un ID)
     for (unsigned int faceId = 0; faceId < meshTriangulated.Cell2DsId.size(); ++faceId) {
-        const vector<unsigned int>& faceEdges = meshTriangulated.Cell2DsEdges[faceId]; // spigoli della faccia corrente
+        // Otteniamo la lista degli spigoli della faccia corrente
+        const vector<unsigned int>& faceEdges = meshTriangulated.Cell2DsEdges[faceId];
         
+        // Per ogni spigolo della faccia, otteniamo i due vertici estremi
         for (unsigned int edgeOriginalId : faceEdges) {
-			unsigned int v1_id = meshTriangulated.Cell1DsExtrema(edgeOriginalId, 0);
-			unsigned int v2_id = meshTriangulated.Cell1DsExtrema(edgeOriginalId, 1);
-			pair<unsigned int, unsigned int> sortedEdgeVertices = {min(v1_id, v2_id), max(v1_id, v2_id)};
-			// Ordiniamo i vertici dello spigolo per avere una chiave univoca nella mappa
-			edgeToFaces[sortedEdgeVertices].push_back(faceId);
+            unsigned int v1_id = meshTriangulated.Cell1DsExtrema(edgeOriginalId, 0); // primo vertice
+            unsigned int v2_id = meshTriangulated.Cell1DsExtrema(edgeOriginalId, 1); // secondo vertice
+            
+            // Creiamo una coppia ordinata dei vertici per usare come chiave univoca nella mappa
+            // Ordiniamo con min e max per evitare duplicati dovuti a orientamenti diversi dello spigolo
+            pair<unsigned int, unsigned int> sortedEdgeVertices = {min(v1_id, v2_id), max(v1_id, v2_id)};
+            
+            // Inseriamo l'ID della faccia corrente nel vettore associato a questo spigolo
+            edgeToFaces[sortedEdgeVertices].push_back(faceId);
         }
     }
     return edgeToFaces;
 }
 
 
+// Costruisce una mappa che associa ogni vertice alle facce che lo contengono.
+// La chiave è l'ID del vertice, il valore è un vettore di ID delle facce contenenti quel vertice.
 map<unsigned int, vector<unsigned int>> buildVertexToFacesMap(const PolyhedralMesh& meshTriangulated) {
     map<unsigned int, vector<unsigned int>> vertexToFaces;
+    
+    // Iteriamo su tutte le facce
     for (unsigned int faceId = 0; faceId < meshTriangulated.Cell2DsId.size(); ++faceId) {
+        // Per ogni vertice della faccia, inseriamo l'ID della faccia nel vettore associato al vertice
         for (unsigned int vertexOriginalId : meshTriangulated.Cell2DsVertices[faceId]) {
             vertexToFaces[vertexOriginalId].push_back(faceId);
         }
@@ -90,11 +105,18 @@ map<unsigned int, vector<unsigned int>> buildVertexToFacesMap(const PolyhedralMe
 }
 
 
+// Costruisce una mappa che associa ogni vertice agli spigoli a cui appartiene.
+// La chiave è l'ID del vertice, il valore è un vettore di ID degli spigoli che contengono quel vertice.
 map<unsigned int, vector<unsigned int>> buildVertexToEdgesMap(const PolyhedralMesh& meshTriangulated) {
     map<unsigned int, vector<unsigned int>> vertexToEdges;
+    
+    // Scorriamo tutti gli spigoli del mesh (da 0 al numero totale di spigoli)
     for (unsigned int edgeId = 0; edgeId < meshTriangulated.Cell1DsExtrema.rows(); ++edgeId) {
+        // Otteniamo i due vertici estremi dello spigolo corrente
         unsigned int v1 = meshTriangulated.Cell1DsExtrema(edgeId, 0);
         unsigned int v2 = meshTriangulated.Cell1DsExtrema(edgeId, 1);
+        
+        // Inseriamo l'ID dello spigolo nei vettori associati a entrambi i vertici
         vertexToEdges[v1].push_back(edgeId);
         vertexToEdges[v2].push_back(edgeId);
     }
