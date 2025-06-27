@@ -1,7 +1,7 @@
 @startuml
 !theme materia-outline
 
-titleSolidi Geodetici di I e II classe e loro duali
+title Solidi Geodetici di I e II classe e loro duali
 
 package PolyhedronLibrary <<Folder>> {
 
