@@ -22,6 +22,8 @@ namespace PolyhedralLibrary
 		b = temp;
 	}
 	
+	// Calcolo i VEF dei poliedri, funzione semplice e chiara
+	
 	vector<int> CalcoloVEFPoliedro(const int q, const int b, const int c)
 	{
 		vector<int> result(3); // inizializza un vettore con 3 valori, tutti -1 
@@ -48,7 +50,7 @@ namespace PolyhedralLibrary
 			F = 20 * T;
 		}
 	
-		result[0] = V;  // Primo elemento: V (vertici)
+		result[0] = V;  // Primo elemento: V (vertici) 
 		result[1] = E;  // Secondo elemento: E (spigoli)
 		result[2] = F;  // Terzo elemento: F (facce)
 	
@@ -85,9 +87,7 @@ namespace PolyhedralLibrary
 			F = 20 * (3 * b * b + 3 * b);
 		}
 
-		result[0] = V;  
-		result[1] = E;  
-		result[2] = F;
+		result[0] = V; result[1] = E; result[2] = F;
 		
 		return result;
 	}
