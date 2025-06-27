@@ -1,7 +1,7 @@
 @startuml
 !theme materia-outline
 
-title Polyhedral Structure and Geodesic/Goldberg Polyhedra
+titleSolidi Geodetici di I e II classe e loro duali
 
 package PolyhedronLibrary <<Folder>> {
 
