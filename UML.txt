@@ -31,7 +31,7 @@ package PolyhedronLibrary <<Folder>> {
     }
 
 
-    class ShortestPathResult {Add commentMore actions
+    class ShortestPathResult {
         + numEdges : unsigned int
         + totalLength : double
         + verticesInPath : std::vector<bool>
