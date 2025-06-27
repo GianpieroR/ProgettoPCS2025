@@ -1,7 +1,7 @@
 #include <iostream>
 #include <cstdlib> 
-#include "PolyhedralMesh.hpp"  // Definizione della mesh e operazioni geometriche
-#include "Utils.hpp"           // Funzioni di supporto (triangolazioni, cammini, esportazioni, ecc.)
+#include "PolyhedralMesh.hpp"  
+#include "Utils.hpp"           
 
 using namespace std;
 using namespace Eigen;
@@ -63,36 +63,36 @@ int main(int argc, char *argv[]) {
         // Caso: mesh "asimmetrica" (strati base ≠ strati superiori)
 
         if (p == 3 && q == 3) {
-            generateTetrahedron(mesh);
-            Triangulation(q, b, c, mesh, meshFinal);
+            generaTetraedro(mesh);
+            Triangolazione(q, b, c, mesh, meshFinal);
 
         } else if (p == 3) {
             // Se p = 3, il poliedro base è un solido platonico con 3 lati per faccia
-            (q == 4) ? generateOctahedron(mesh) : generateIcosahedron(mesh);
-            Triangulation(q, b, c, mesh, meshFinal);
+            (q == 4) ? generaOttaedro(mesh) : generaIcosaedro(mesh);
+            Triangolazione(q, b, c, mesh, meshFinal);
 
         } else if (q == 3) {
             // Invertiamo p e q se q = 3, perché servono per il duale
-            (p == 4) ? generateOctahedron(mesh) : generateIcosahedron(mesh);
+            (p == 4) ? generaOttaedro(mesh) : generaIcosaedro(mesh);
             invertiValori(p, q);
-            TriangulationDual(q, b, c, mesh, meshFinal);
+            TriangolazioneDuale(q, b, c, mesh, meshFinal);
         }
 
     } else {
         // Caso: mesh "simmetrica" (stessi strati sopra e sotto)
 
         if (p == 3 && q == 3) {
-            generateTetrahedron(mesh);
-            Triangulation2(q, b, mesh, meshFinal);
+            generaTetraedro(mesh);
+            Triangolazione2(q, b, mesh, meshFinal);
 
         } else if (p == 3) {
-            (q == 4) ? generateOctahedron(mesh) : generateIcosahedron(mesh);
-            Triangulation2(q, b, mesh, meshFinal);
+            (q == 4) ? generaOttaedro(mesh) : generaIcosaedro(mesh);
+            Triangolazione2(q, b, mesh, meshFinal);
 
         } else if (q == 3) {
-            (p == 4) ? generateOctahedron(mesh) : generateIcosahedron(mesh);
+            (p == 4) ? generaOttaedro(mesh) : generaIcosaedro(mesh);
             invertiValori(p, q);
-            Triangulation2Dual(q, b, mesh, meshFinal);
+            Triangolazione2(q, b, mesh, meshFinal);
         }
     }
 

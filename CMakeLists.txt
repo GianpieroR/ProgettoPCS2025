@@ -23,13 +23,17 @@ endif (WIN32)
 find_package(Eigen3 CONFIG REQUIRED)
 list(APPEND ${PROJECT_NAME}_LINKED_LIBRARIES PUBLIC Eigen3::Eigen)
 
+## Threads
+find_package(Threads REQUIRED)
+list(APPEND ${PROJECT_NAME}_LINKED_LIBRARIES PRIVATE Threads::Threads)
+
 ## GTest
 find_package(GTest REQUIRED)
 
 list(APPEND ${PROJECT_NAME}_LINKED_LIBRARIES PRIVATE GTest::gtest)
 list(APPEND ${PROJECT_NAME}_LINKED_LIBRARIES PRIVATE GTest::gtest_main)
 list(APPEND ${PROJECT_NAME}_LINKED_LIBRARIES PRIVATE GTest::gmock)
-
+list(APPEND ${PROJECT_NAME}_LINKED_LIBRARIES PRIVATE GTest::gmock_main)
 
 ################################################################################
 
@@ -65,6 +69,9 @@ add_executable(${PROJECT_NAME} main.cpp
       ${${PROJECT_NAME}_sources}
       ${${PROJECT_NAME}_headers})
 
+target_include_directories(${PROJECT_NAME} PUBLIC ${${CMAKE_PROJECT_NAME}_includes})
+target_link_libraries(${PROJECT_NAME} PUBLIC ${${PROJECT_NAME}_LINKED_LIBRARIES})
+target_compile_options(${PROJECT_NAME} PUBLIC -fPIC)
 
 add_executable(${PROJECT_NAME}_TEST main_test.cpp
       ${${PROJECT_NAME}_TEST_sources}
