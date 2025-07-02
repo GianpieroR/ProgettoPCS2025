@@ -13,32 +13,9 @@ using namespace PolyhedralLibrary;
 
 namespace PolyhedraTest {
 
-// Dimension
-TEST(TestPolyedra, TestComputePolyhedronVEF)
-{
-	int b = 2;
-	int c = 0;
-	
-	// caso 1: p=3, q=3
-	int q1 = 3;
-	vector<int> expected1 = {10, 24, 16};
-	vector<int> result1 = CalcoloVEFPoliedro(q1, b, c);
-	EXPECT_EQ(expected1, result1);
-	
-	// caso 2: p=3, q=4
-	int q2 = 4;
-	vector<int> expected2 = {18, 48, 32};
-	vector<int> result2 =CalcoloVEFPoliedro(q2, b, c);
-	EXPECT_EQ(expected2, result2);
-	
-    // caso 3: p=3, q=5
-	int q3 = 5;
-	vector<int> expected3 = {42, 120, 80};
-	vector<int> result3 =CalcoloVEFPoliedro(q3, b, c);
-	EXPECT_EQ(expected3, result3);
-}
 
-TEST(TestPolyedra, TestCalculateDuplicated)
+
+TEST(TestPolyedra, TestCalcoloDuplicato)
 {
 	int b = 2;
 	int c = 0;
@@ -65,176 +42,34 @@ TEST(TestPolyedra, TestCalculateDuplicated)
 	EXPECT_EQ(expected3, result3);
 }
 
-
-// Triangulation
-TEST(TestPolyedra, TestTriangulationTetrahedron)
+// Dimension
+TEST(TestPolyedra, TestCalcoloVEFPoliedro)
 {
-	PolyhedralMesh meshExpected;
-	PolyhedralMesh meshFinal;
-
-	// VERTICI
-	meshExpected.Cell0DsId = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-
-	meshExpected.Cell0DsCoordinates = MatrixXd(3, 10);
-	
-	meshExpected.Cell0DsCoordinates.col(0)  <<  0, 0, 0.57735;
-	meshExpected.Cell0DsCoordinates.col(1)  <<  -0.57735, -0.57735,  0.57735;
-	meshExpected.Cell0DsCoordinates.col(2)  <<  0, -0.57735, 0;
-	meshExpected.Cell0DsCoordinates.col(3)  <<  -0.57735, 0, 0;
-	meshExpected.Cell0DsCoordinates.col(4)  <<  -0.57735,  0.57735, -0.57735;
-	meshExpected.Cell0DsCoordinates.col(5)  <<  0, 0, -0.57735;
-	meshExpected.Cell0DsCoordinates.col(6)  <<  0, 0.57735, 0;
-	meshExpected.Cell0DsCoordinates.col(7)  <<  0.57735,  -0.57735, -0.57735;
-	meshExpected.Cell0DsCoordinates.col(8)  <<  0.57735, 0, 0;
-	meshExpected.Cell0DsCoordinates.col(9)  <<  0.57735, 0.57735, 0.57735;
-
-	meshExpected.Cell0DsFlag = {};
-
-	// LATI/SPIGOLI
-	meshExpected.Cell1DsId ={0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23};
-
-	meshExpected.Cell1DsExtrema = MatrixXi(24, 2);
-	meshExpected.Cell1DsExtrema << 
-		0, 6,
-		0, 3,
-		3, 6,
-		0, 8,
-		0, 9,
-		2, 8,
-		0, 2,
-		0, 1,
-		1, 2,
-		2, 3,
-		1, 3,
-		2, 7,
-		2, 5,
-		3, 5,
-		3, 4,
-		4, 5,	
-		5, 6,
-		4, 6,
-		5, 7,
-		7, 8,
-		5, 8,
-		6, 8,
-		8, 9,
-		6, 9;
-
-	meshExpected.Cell1DsFlag = {};
-	
-	meshExpected.Cell1DsOriginalFlag = {1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0};
-	
-	// FACCE
-	meshExpected.Cell2DsId = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
-
-	meshExpected.Cell2DsVertices = {
-		{9, 0, 6},
-		{0, 1, 3},
-		{0, 3, 6},
-		{6, 3, 4},
-		{9, 8, 0},
-		{8, 7, 2},
-		{8, 2, 0},
-		{0, 2, 1},
-		{1, 2, 3},
-		{2, 7, 5},
-		{2, 5, 3},
-		{3, 5, 4},
-		{4, 5, 6},
-		{5, 7, 8},
-		{5, 8, 6},
-		{6, 8, 9}
-	};
-
-	meshExpected.Cell2DsEdges = {
-		{4, 0, 23},
-		{7, 10, 1},
-		{1, 2, 0},
-		{2, 14, 17},
-		{22, 3, 4},
-		{19, 11, 5},
-		{5, 6, 3},
-		{6, 8, 7},
-		{8, 9, 10},
-		{11, 18, 12},
-		{12, 13, 9},
-		{13, 15, 14},
-		{15, 16, 17},
-		{18, 19, 20},
-		{20, 21, 16},
-		{21, 22, 23}
-	};
-
-	// POLIEDRI
-	meshExpected.Cell3DsId = {0}; 
-	meshExpected.NumCells0Ds = {10};
-	meshExpected.NumCells1Ds = {24};
-	meshExpected.NumCells2Ds = {16};
-	meshExpected.Cell3DsVertices = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-	meshExpected.Cell3DsEdges = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23};
-	meshExpected.Cell3DsFaces = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
-
-	
-	// mesh ottenuta utilizzando la funzione di triangolazione
-	PolyhedralMesh meshTriangulated;
-	PolyhedralMesh mesh;
-	generaTetraedro(mesh);
-	
-	int q = 3;
 	int b = 2;
 	int c = 0;
 	
-	vector<int> dimension =CalcoloVEFPoliedro(q, b, c);
-	vector<int> dimensionDuplicated = CalcoloDuplicato(q, b, c, dimension);
-	triangulateAndStore(mesh, meshTriangulated, b, c, dimensionDuplicated);
-	RimuoviLatiDuplicati(meshTriangulated);
-	RimuoviVerticiDuplicati(meshTriangulated);
-	NewMesh(meshTriangulated, meshFinal, dimension);
-    PopulateCell3D(meshFinal);
+	// caso 1: p=3, q=3
+	int q1 = 3;
+	vector<int> expected1 = {10, 24, 16};
+	vector<int> result1 = CalcoloVEFPoliedro(q1, b, c);
+	EXPECT_EQ(expected1, result1);
 	
+	// caso 2: p=3, q=4
+	int q2 = 4;
+	vector<int> expected2 = {18, 48, 32};
+	vector<int> result2 =CalcoloVEFPoliedro(q2, b, c);
+	EXPECT_EQ(expected2, result2);
 	
-	
-	// CONFRONTI TRA MESH TRIANGOLATA E ATTESA
-	
-	// Id vertici
-    EXPECT_EQ(meshExpected.Cell0DsId, meshFinal.Cell0DsId);
-
-    // Coordinate vertici
-    EXPECT_TRUE(meshExpected.Cell0DsCoordinates.isApprox(meshFinal.Cell0DsCoordinates, 1e-6));
-
-    // Id spigoli
-    EXPECT_EQ(meshExpected.Cell1DsId, meshFinal.Cell1DsId);
-
-    // Estremi spigoli
-    EXPECT_TRUE(meshExpected.Cell1DsExtrema == meshFinal.Cell1DsExtrema);
-
-    // Flag spigoli
-    EXPECT_EQ(meshExpected.Cell1DsFlag, meshFinal.Cell1DsFlag);
-
-    // Id facce
-    EXPECT_EQ(meshExpected.Cell2DsId, meshFinal.Cell2DsId);
-
-    // Vertici delle facce
-    ASSERT_EQ(meshExpected.Cell2DsVertices.size(), meshFinal.Cell2DsVertices.size());
-    for (size_t i = 0; i < meshExpected.Cell2DsVertices.size(); ++i) {
-        EXPECT_EQ(meshExpected.Cell2DsVertices[i], meshFinal.Cell2DsVertices[i]) << "Mismatch in Cell2DsVertices at face " << i;
-    }
-
-    // Spigoli delle facce
-    ASSERT_EQ(meshExpected.Cell2DsEdges.size(), meshFinal.Cell2DsEdges.size());
-    for (size_t i = 0; i < meshExpected.Cell2DsEdges.size(); ++i) {
-        EXPECT_EQ(meshExpected.Cell2DsEdges[i], meshFinal.Cell2DsEdges[i]) << "Mismatch in Cell2DsEdges at face " << i;
-    }
-
-    // POLIEDRI 
-    EXPECT_EQ(meshExpected.Cell3DsId, meshFinal.Cell3DsId);
-    EXPECT_EQ(meshExpected.Cell3DsVertices, meshFinal.Cell3DsVertices);
-    EXPECT_EQ(meshExpected.Cell3DsEdges, meshFinal.Cell3DsEdges);
-    EXPECT_EQ(meshExpected.Cell3DsFaces, meshFinal.Cell3DsFaces);
+    // caso 3: p=3, q=5
+	int q3 = 5;
+	vector<int> expected3 = {42, 120, 80};
+	vector<int> result3 =CalcoloVEFPoliedro(q3, b, c);
+	EXPECT_EQ(expected3, result3);
 }
 
 
-TEST(TestPolyedra, TestOrderedEdges)
+
+TEST(TestPolyedra, TestSpigoliOrdinati)
 { 
    // mesh ottenuta utilizzando la funzione di triangolazione
 	PolyhedralMesh meshTriangulated;
@@ -318,7 +153,117 @@ TEST(TestPolyedra, TestOrderedEdges)
 	}
 }
 
-TEST(TestPolyedra, TestNotNullArea)
+
+// Triangulation
+TEST(TestPolyedra, TestTriangolazioneTetraedro)
+{
+	PolyhedralMesh meshExpected;
+	PolyhedralMesh meshFinal;
+
+	// VERTICI
+	meshExpected.Cell0DsId = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+
+	meshExpected.Cell0DsCoordinates = MatrixXd(3, 10);
+	
+	meshExpected.Cell0DsCoordinates.col(0)  <<  0, 0, 0.57735;
+	meshExpected.Cell0DsCoordinates.col(1)  <<  -0.57735, -0.57735,  0.57735;
+	meshExpected.Cell0DsCoordinates.col(2)  <<  0, -0.57735, 0;
+	meshExpected.Cell0DsCoordinates.col(3)  <<  -0.57735, 0, 0;
+	meshExpected.Cell0DsCoordinates.col(4)  <<  -0.57735,  0.57735, -0.57735;
+	meshExpected.Cell0DsCoordinates.col(5)  <<  0, 0, -0.57735;
+	meshExpected.Cell0DsCoordinates.col(6)  <<  0, 0.57735, 0;
+	meshExpected.Cell0DsCoordinates.col(7)  <<  0.57735,  -0.57735, -0.57735;
+	meshExpected.Cell0DsCoordinates.col(8)  <<  0.57735, 0, 0;
+	meshExpected.Cell0DsCoordinates.col(9)  <<  0.57735, 0.57735, 0.57735;
+
+	meshExpected.Cell0DsFlag = {};
+
+	// LATI/SPIGOLI
+	meshExpected.Cell1DsId ={0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23};
+
+	meshExpected.Cell1DsExtrema = MatrixXi(24, 2);
+	meshExpected.Cell1DsExtrema << 0,6, 0,3, 3,6, 0,8, 0,9, 2,8, 0,2, 0,1, 1,2, 2,3, 1,3, 2,7, 2,5, 3,5, 3,4, 4,5, 5,6, 4,6, 5,7, 7,8, 5,8, 6,8, 8,9, 6,9;
+
+	meshExpected.Cell1DsFlag = {};
+	
+	meshExpected.Cell1DsOriginalFlag = {1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0};
+	
+	// FACCE
+	meshExpected.Cell2DsId = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+
+	meshExpected.Cell2DsVertices = { {9,0,6}, {0,1,3}, {0,3,6}, {6,3,4}, {9,8,0}, {8,7,2}, {8,2,0}, {0,2,1}, {1,2,3}, {2,7,5}, {2,5,3}, {3,5,4}, {4,5,6}, {5,7,8}, {5,8,6}, {6,8,9} };
+
+	meshExpected.Cell2DsEdges = { {4,0,23}, {7,10,1}, {1,2,0}, {2,14,17}, {22,3,4}, {19,11,5}, {5,6,3}, {6,8,7}, {8,9,10}, {11,18,12}, {12,13,9}, {13,15,14}, {15,16,17}, {18,19,20}, {20,21,16}, {21,22,23} };
+
+	// POLIEDRI
+	meshExpected.Cell3DsId = {0}; 
+	meshExpected.NumCells0Ds = {10};
+	meshExpected.NumCells1Ds = {24};
+	meshExpected.NumCells2Ds = {16};
+	meshExpected.Cell3DsVertices = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+	meshExpected.Cell3DsEdges = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23};
+	meshExpected.Cell3DsFaces = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+
+	
+	// mesh ottenuta utilizzando la funzione di triangolazione
+	PolyhedralMesh meshTriangulated;
+	PolyhedralMesh mesh;
+	generaTetraedro(mesh);
+	
+	int q = 3;
+	int b = 2;
+	int c = 0;
+	
+	vector<int> dimension =CalcoloVEFPoliedro(q, b, c);
+	vector<int> dimensionDuplicated = CalcoloDuplicato(q, b, c, dimension);
+	triangulateAndStore(mesh, meshTriangulated, b, c, dimensionDuplicated);
+	RimuoviLatiDuplicati(meshTriangulated);
+	RimuoviVerticiDuplicati(meshTriangulated);
+	NewMesh(meshTriangulated, meshFinal, dimension);
+    PopulateCell3D(meshFinal);
+	
+	
+	
+	// CONFRONTI TRA MESH TRIANGOLATA E ATTESA
+	
+	// Id vertici
+    EXPECT_EQ(meshExpected.Cell0DsId, meshFinal.Cell0DsId);
+
+    // Coordinate vertici
+    EXPECT_TRUE(meshExpected.Cell0DsCoordinates.isApprox(meshFinal.Cell0DsCoordinates, 1e-6));
+
+    // Id spigoli
+    EXPECT_EQ(meshExpected.Cell1DsId, meshFinal.Cell1DsId);
+
+    // Estremi spigoli
+    EXPECT_TRUE(meshExpected.Cell1DsExtrema == meshFinal.Cell1DsExtrema);
+
+    // Flag spigoli
+    EXPECT_EQ(meshExpected.Cell1DsFlag, meshFinal.Cell1DsFlag);
+
+    // Id facce
+    EXPECT_EQ(meshExpected.Cell2DsId, meshFinal.Cell2DsId);
+
+    // Vertici delle facce
+    ASSERT_EQ(meshExpected.Cell2DsVertices.size(), meshFinal.Cell2DsVertices.size());
+    for (size_t i = 0; i < meshExpected.Cell2DsVertices.size(); ++i) {
+        EXPECT_EQ(meshExpected.Cell2DsVertices[i], meshFinal.Cell2DsVertices[i]) << "Mismatch in Cell2DsVertices at face " << i;
+    }
+
+    // Spigoli delle facce
+    ASSERT_EQ(meshExpected.Cell2DsEdges.size(), meshFinal.Cell2DsEdges.size());
+    for (size_t i = 0; i < meshExpected.Cell2DsEdges.size(); ++i) {
+        EXPECT_EQ(meshExpected.Cell2DsEdges[i], meshFinal.Cell2DsEdges[i]) << "Mismatch in Cell2DsEdges at face " << i;
+    }
+
+    // POLIEDRI 
+    EXPECT_EQ(meshExpected.Cell3DsId, meshFinal.Cell3DsId);
+    EXPECT_EQ(meshExpected.Cell3DsVertices, meshFinal.Cell3DsVertices);
+    EXPECT_EQ(meshExpected.Cell3DsEdges, meshFinal.Cell3DsEdges);
+    EXPECT_EQ(meshExpected.Cell3DsFaces, meshFinal.Cell3DsFaces);
+}
+
+TEST(TestPolyedra, TestAreaNonNulla)
 {
 	double eps = numeric_limits<double>::epsilon();
 
@@ -354,7 +299,7 @@ TEST(TestPolyedra, TestNotNullArea)
 	
 }
 
-TEST(TestPolyedra, TestNotNullEdges){
+TEST(TestPolyedra, TestSpigoliNonNulli){
 	
 	double eps = numeric_limits<double>::epsilon();
 
@@ -393,7 +338,7 @@ TEST(TestPolyedra, TestNotNullEdges){
 
 
 
-TEST(TestPolyedra, TestNotNullEdgesDual){
+TEST(TestPolyedra, TestSpigoliDualiNonNulli){
 	
 	double eps = numeric_limits<double>::epsilon();
 	PolyhedralMesh mesh;
@@ -425,7 +370,7 @@ TEST(TestPolyedra, TestNotNullEdgesDual){
 	}
 }
 
-TEST(TestPolyedra, TestNotNullEdgesTri2){
+TEST(TestPolyedra, TestSpigoliNonNulliTriangolazione2){
 	
 	double eps = numeric_limits<double>::epsilon();
 	PolyhedralMesh mesh;
@@ -457,7 +402,7 @@ TEST(TestPolyedra, TestNotNullEdgesTri2){
 }
 
 
-TEST(TestPolyedra, TestNotNullAreaTri2)
+TEST(TestPolyedra, TestAreaNonNullaTriangolazione2)
 {
 	double eps = numeric_limits<double>::epsilon();
 
@@ -500,7 +445,7 @@ TEST(TestPolyedra, TestNotNullAreaTri2)
 }
 
 
-TEST(Polyedra, DualTest){
+TEST(Polyedra, TestDuale){
 	
 	// mesh ottenuta utilizzando la funzione di triangolazioneMore actions
 	PolyhedralMesh meshTriangulated;
@@ -663,99 +608,9 @@ TEST(Polyedra, DualTest){
 }
 
 
-//TRIANGULATION2
-
-TEST(TestPolyedra, TestOrderedEdges2)
-{ 
-	PolyhedralLibrary::PolyhedralMesh mesh;
-	PolyhedralLibrary::generaTetraedro(mesh);
-	
-	PolyhedralMesh meshTriangulated;
-	PolyhedralMesh meshFinal;
-	PolyhedralMesh meshTriangulated2;
-	
-	int q = 3;
-	int b = 2;
-	unsigned int maxFlag = numeric_limits<unsigned int>::max();
-	
-	vector<int> dimension =CalcoloVEFPoliedro(q, b, 0);
-	vector<int> dimensionDuplicated = CalcoloDuplicato(q, b, 0, dimension);
-	triangulateAndStore(mesh, meshTriangulated, b, 0,  dimensionDuplicated);
-	RimuoviVerticiDuplicati(meshTriangulated);
-	RimuoviLatiDuplicati(meshTriangulated);
-	NewMesh(meshTriangulated, meshFinal, dimension);
-	
-	vector<int> dimension2 = CalcoloDimensione2(b, q);
-	map<pair<unsigned int, unsigned int>, vector<unsigned int>> edgeToFacesMap = buildEdgeToFacesMap(meshFinal);
-	triangulateAndStore2(meshFinal, meshTriangulated2, dimension2, edgeToFacesMap);
-	
-	// per ogni faccia i lati sono ordinati in modo che la fine dell'arco e coincida con l'inizio dell'arco successivo (e+1)%E
-	// il vertice e della faccia deve corrispondere all'origine dell'arco e
-
-    // ciclo su tutte le facce della mesh triangolata 
-    for (size_t f = 0; f < meshFinal.Cell2DsId.size(); ++f) {
-		const auto& edges = meshFinal.Cell2DsEdges[f]; // lista dei lati di una faccia
-        const auto& vertices = meshFinal.Cell2DsVertices[f]; // lista dei vertici di una faccia 
-        size_t E = edges.size(); // numero di vertici dela faccia
-        
-		
-		ASSERT_EQ(vertices.size(), E) << "Numero di vertici e di lati non corrispondono per faccia " << f;
-		
-		// itero su ogni lato e della faccia 
-		 for (size_t e = 0; e < E; ++e) {
-			unsigned int currentEdge = edges[e]; // lato corrente
-            unsigned int nextEdge = edges[(e + 1) % E]; // lato successivo 
-            
-            unsigned int currentEdgeOrigin = maxFlag;
-			unsigned int currentEdgeEnd = maxFlag;
-			unsigned int nextEdgeOrigin = maxFlag;
-			unsigned int nextEdgeEnd = maxFlag;
-            
-            bool foundCurrent = false;
-            for (unsigned int i = 0; i < meshFinal.Cell1DsId.size(); i++) {
-                if (currentEdge == meshFinal.Cell1DsId[i]) {
-                    currentEdgeOrigin = meshFinal.Cell1DsExtrema(i, 0);
-                    currentEdgeEnd = meshFinal.Cell1DsExtrema(i, 1);
-                    foundCurrent = true;
-                    break; 
-                }
-            }
-           
-            ASSERT_TRUE(foundCurrent) << "Master Edge ID " << currentEdge << " not found in Cell1DsId!";
-
-            // trovo gli estremi per nextEdgeMasterId
-            bool foundNext = false;
-            for (unsigned int i = 0; i < meshFinal.Cell1DsId.size(); i++) {
-                if (nextEdge == meshFinal.Cell1DsId[i]) {
-                    nextEdgeOrigin = meshFinal.Cell1DsExtrema(i, 0);
-                    nextEdgeEnd = meshFinal.Cell1DsExtrema(i, 1);
-                    foundNext = true;
-                    break; 
-                }
-            }
-            ASSERT_TRUE(foundNext) << "Master Edge ID " << nextEdge << " not found in Cell1DsId!";
-
-            // recupero il vertice della faccia
-            unsigned int faceVertex = vertices[e]; 
-
-            bool condition = (currentEdgeOrigin == nextEdgeOrigin) ||
-                             (currentEdgeOrigin == nextEdgeEnd) ||
-                             (currentEdgeEnd == nextEdgeOrigin) ||
-                             (currentEdgeEnd == nextEdgeEnd);
-            EXPECT_TRUE(condition);
-
-            // Controllo che il vertice e-esimo della faccia coincida con l'origine del lato e-esimo
-            
-            bool condition2 = (faceVertex == currentEdgeOrigin) ||
-            					(faceVertex == currentEdgeEnd);
-            EXPECT_TRUE(condition2);
-
-		}		
-	}
-}
 
 // CAMMINO MINIMO
-TEST(TestPolyedra, ShortestPath){
+TEST(TestPolyedra, CamminoMinimo){
 	
 	PolyhedralMesh mesh;
 	PolyhedralMesh meshTriangulated;
